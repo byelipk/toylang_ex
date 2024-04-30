@@ -14,7 +14,7 @@ defmodule Toylang.Core.LexerTest do
       {:identifier, "hello"},
       {:method_open, "do"},
       {:method_ret, "return"},
-      {:identifier, "10"},
+      {:number, "10"},
       {:method_close, "end"},
       # {:eof, "eof"}
     ]

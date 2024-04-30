@@ -47,6 +47,10 @@ defmodule Toylang.Core.Lexer do
     char =~ ~r/[a-zA-Z0-9]/
   end
 
+  defp is_digit?(token) do
+    token =~ ~r/[0-9]/
+  end
+
   defp finalize_token(""), do: [{:eof, "eof"}]
   defp finalize_token(chars) do
     token = to_string(chars)
@@ -55,7 +59,12 @@ defmodule Toylang.Core.Lexer do
       "do" -> [{:method_open, token }]
       "end" -> [{:method_close, token }]
       "return" -> [{:method_ret, token}]
-      _ -> [{:identifier, token}]
+      _ -> 
+        if is_digit?(token) do
+          [{:number, token}]
+        else
+          [{:identifier, token}]
+        end
     end
   end
 end
