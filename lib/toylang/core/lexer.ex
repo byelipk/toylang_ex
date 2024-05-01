@@ -8,6 +8,8 @@ defmodule Toylang.Core.Lexer do
   # def give_me_a_number do
   #   return 42
   # end
+  #
+  # var ten = 10
   def get_tokens(input) do
     tokenize(input |> String.graphemes, "", [])
   end
@@ -18,33 +20,36 @@ defmodule Toylang.Core.Lexer do
 
   defp tokenize([char | rest], current_token, tokens) do
     case char do
-      # If we encounter a space, we finalize the current token
-      "" ->
-        tokens ++ finalize_token(current_token)
+      "\s" when current_token != "" ->
+        new_tokens = tokens ++ finalize_token(current_token)
+        tokenize(rest, "", new_tokens)
 
-      " " when current_token != "" ->
-        tokenize(rest, "", tokens ++ finalize_token(current_token))
-
-      " " ->
+      "\s" ->
         tokenize(rest, current_token, tokens)
 
       "\n" ->
-        tokenize(rest, "", tokens ++ finalize_token(current_token))
+        new_tokens = tokens ++ finalize_token(current_token)
+        tokenize(rest, "", new_tokens)
 
       "\t" ->
-        tokenize(rest, "", tokens ++ finalize_token(current_token))
+        new_tokens = tokens ++ finalize_token(current_token)
+        tokenize(rest, "", new_tokens)
 
       _ ->
-        if letter_or_digit?(char) do
-          tokenize(rest, current_token <> char, tokens)
-        else
-          tokenize(rest, "", tokens ++ finalize_token(char))
+        cond do
+          is_letter?(char) -> 
+            tokenize(rest, current_token <> char, tokens)
+          is_digit?(char) ->
+            tokenize(rest, current_token <> char, tokens)
+          true ->
+            new_tokens = tokens ++ finalize_token(current_token)
+            tokenize(rest, "", new_tokens)
         end
     end
   end
 
-  defp letter_or_digit?(char) do
-    char =~ ~r/[a-zA-Z0-9]/
+  defp is_letter?(char) do
+    char =~ ~r/[a-zA-Z]/
   end
 
   defp is_digit?(token) do
