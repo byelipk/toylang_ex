@@ -57,8 +57,7 @@ defmodule Toylang.Core.Lexer do
   end
 
   defp finalize_token(""), do: [{:eof, "eof"}]
-  defp finalize_token(chars) do
-    token = to_string(chars)
+  defp finalize_token(token) do
     case token do
       "def" -> [{:method_def, token }]
       "do" -> [{:method_open, token }]
