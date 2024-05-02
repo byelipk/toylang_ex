@@ -14,8 +14,12 @@ defmodule Toylang.Core.Lexer do
     tokenize(input |> String.graphemes, "", [])
   end
 
+  defp tokenize([], "", tokens) do
+    tokens ++ finalize_token("")
+  end
+
   defp tokenize([], current_token, tokens) do
-    tokens ++ finalize_token(current_token)
+    tokens ++ finalize_token(current_token) ++ finalize_token("")
   end
 
   defp tokenize([char | rest], current_token, tokens) do
