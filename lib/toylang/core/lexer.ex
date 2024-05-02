@@ -24,51 +24,74 @@ defmodule Toylang.Core.Lexer do
     end
   end
   defp tokenize([char | rest], current_token, tokens) do
-    case char do
-      # Null bytes
-      "\0" ->
-        tokenize(rest, "", tokens ++ finalize_token(""))
+    # Check if we're building up a token
+    is_tokenizing = current_token != ""
 
-      "\s" ->
-        cond do
-          has_opening_quote?(current_token) -> 
-            tokenize(rest, current_token <> char, tokens)
-          current_token != "" -> 
-            new_tokens = tokens ++ finalize_token(current_token)
-            tokenize(rest, "", new_tokens)
-          true -> 
-            tokenize(rest, current_token <> char, tokens) 
-        end
+    # Check if we've already EOF'd
+    if List.last(tokens) == {:eof} do
+      tokens
+    else
+      case char do
+        # Null bytes
+        "\0" ->
+          tokenize(rest, "", tokens ++ finalize_token(""))
 
-      # Newline
-      "\n" ->
-        new_tokens = tokens ++ finalize_token(current_token)
-        tokenize(rest, "", new_tokens)
+        # Whitespace
+        "\s" ->
+          cond do
+            has_opening_quote?(current_token) -> 
+              tokenize(rest, current_token <> char, tokens)
+            !is_tokenizing -> 
+              tokenize(rest, "", tokens)
+            is_tokenizing -> 
+              new_tokens = tokens ++ finalize_token(current_token)
+              tokenize(rest, "", new_tokens)
+            true -> 
+              tokenize(rest, current_token <> char, tokens) 
+          end
 
-      # Tab
-      "\t" ->
-        new_tokens = tokens ++ finalize_token(current_token)
-        tokenize(rest, "", new_tokens)
+        # Newline
+        "\n" ->
+          cond do
+            !is_tokenizing -> 
+              tokenize(rest, "", tokens)
+            is_tokenizing -> 
+              new_tokens = tokens ++ finalize_token(current_token)
+              tokenize(rest, "", new_tokens)
+          end
 
-      # Opening quote for a string
-      "\"" when current_token == "" -> 
-        tokenize(rest, current_token <> char, tokens)
+        # Tab
+        "\t" ->
+          cond do
+            !is_tokenizing -> 
+              tokenize(rest, "", tokens)
+            is_tokenizing -> 
+              new_tokens = tokens ++ finalize_token(current_token)
+              tokenize(rest, "", new_tokens)
+          end
 
-      # Closing quote for a string
-      "\"" when current_token != "" -> 
-        tokenize(rest, current_token <> char, tokens)
+        # Opening quote for a string
+        "\"" when current_token == "" -> 
+          tokenize(rest, current_token <> char, tokens)
 
-      # Other characters
-      _ ->
-        cond do
-          is_letter?(char) -> 
-            tokenize(rest, current_token <> char, tokens)
-          is_digit?(char) ->
-            tokenize(rest, current_token <> char, tokens)
-          true ->
-            new_tokens = tokens ++ finalize_token(current_token)
-            tokenize(rest, "", new_tokens)
-        end
+        # Closing quote for a string
+        "\"" when current_token != "" -> 
+          tokenize(rest, current_token <> char, tokens)
+
+        # Other characters
+        _ ->
+          cond do
+            is_letter?(char) -> 
+              tokenize(rest, current_token <> char, tokens)
+            is_digit?(char) ->
+              tokenize(rest, current_token <> char, tokens)
+            has_opening_quote?(current_token) ->
+              tokenize(rest, current_token <> char, tokens)
+            true ->
+              new_tokens = tokens ++ finalize_token(current_token)
+              tokenize(rest, "", new_tokens)
+          end
+      end
     end
   end
 
@@ -95,10 +118,10 @@ defmodule Toylang.Core.Lexer do
   defp finalize_token(""), do: [{:eof}]
   defp finalize_token(token) do
     case token do
-      "def" -> [{:define, nil}]
-      "do" -> [{:do, nil}]
-      "end" -> [{:end, nil}]
-      "return" -> [{:return, nil }]
+      "def" -> [{:define}]
+      "do" -> [{:do}]
+      "end" -> [{:end}]
+      "return" -> [{:return}]
       _ -> 
         cond do
           is_digit?(token) -> [{:integer, token}]
