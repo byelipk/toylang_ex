@@ -25,7 +25,9 @@ defmodule Toylang.Core.Lexer do
   end
   defp tokenize([char | rest], current_token, tokens) do
     # Check if we're building up a token
-    is_tokenizing = current_token != ""
+    token_len = String.length(current_token)
+    is_tokenizing = token_len > 0
+    is_empty_token = token_len == 0
 
     # Check if we've already EOF'd
     if List.last(tokens) == {:eof} do
@@ -41,7 +43,7 @@ defmodule Toylang.Core.Lexer do
           cond do
             has_opening_quote?(current_token) -> 
               tokenize(rest, current_token <> char, tokens)
-            !is_tokenizing -> 
+            is_empty_token -> 
               tokenize(rest, "", tokens)
             is_tokenizing -> 
               new_tokens = tokens ++ finalize_token(current_token)
@@ -62,12 +64,12 @@ defmodule Toylang.Core.Lexer do
         # Tab, swallow them for now
         "\t" -> tokenize(rest, current_token, tokens)
 
-        # Opening quote for a string
-        "\"" when current_token == "" -> 
+        # Closing quote for a string
+        "\"" when is_tokenizing -> 
           tokenize(rest, current_token <> char, tokens)
 
-        # Closing quote for a string
-        "\"" when current_token != "" -> 
+        # Opening quote for a string
+        "\"" -> 
           tokenize(rest, current_token <> char, tokens)
 
         # Other characters
