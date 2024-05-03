@@ -64,11 +64,7 @@ defmodule Toylang.Core.Lexer do
         # Tab, swallow them for now
         "\t" -> tokenize(rest, current_token, tokens)
 
-        # Closing quote for a string
-        "\"" when is_tokenizing -> 
-          tokenize(rest, current_token <> char, tokens)
-
-        # Opening quote for a string
+        # Opening and closing quote for a string
         "\"" -> 
           tokenize(rest, current_token <> char, tokens)
 
