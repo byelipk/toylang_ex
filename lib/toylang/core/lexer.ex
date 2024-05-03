@@ -53,22 +53,14 @@ defmodule Toylang.Core.Lexer do
         # Newline
         "\n" ->
           cond do
-            !is_tokenizing -> 
-              tokenize(rest, "", tokens)
             is_tokenizing -> 
               new_tokens = tokens ++ finalize_token(current_token)
               tokenize(rest, "", new_tokens)
+            true -> tokenize(rest, "", tokens)
           end
 
-        # Tab
-        "\t" ->
-          cond do
-            !is_tokenizing -> 
-              tokenize(rest, "", tokens)
-            is_tokenizing -> 
-              new_tokens = tokens ++ finalize_token(current_token)
-              tokenize(rest, "", new_tokens)
-          end
+        # Tab, swallow them for now
+        "\t" -> tokenize(rest, current_token, tokens)
 
         # Opening quote for a string
         "\"" when current_token == "" -> 
